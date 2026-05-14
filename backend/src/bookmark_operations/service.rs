@@ -144,7 +144,7 @@ pub async fn create_bookmark(
         updated_at: now,
     };
 
-    let result = collection.insert_one(&bookmark).await?;;
+    let result = collection.insert_one(&bookmark).await?;
     let bookmark_id = result.inserted_id.as_object_id()
         .ok_or_else(|| AppError::Internal("Failed to get bookmark ID".into()))?;
 
