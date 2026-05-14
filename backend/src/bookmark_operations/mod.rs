@@ -221,6 +221,8 @@ pub fn routes() -> Router<AppState> {
         .route("/bookmarks/import", post(model::import_bookmarks))
         .route("/bookmarks/import/status/:job_id", get(model::import_status))
         .route("/bookmarks/reprocess-weak", post(model::reprocess_weak_bookmarks))
+        .route("/bookmarks/reprocess-all", post(model::reprocess_all_bookmarks))
+        .route("/bookmarks/:id/reprocess", post(model::reprocess_single_bookmark))
         .route("/bookmarks/:id", get(model::get_bookmark))
         .route("/bookmarks/:id", put(model::update_bookmark))
         .route("/bookmarks/:id", delete(model::delete_bookmark))

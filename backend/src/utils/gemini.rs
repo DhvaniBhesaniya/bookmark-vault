@@ -8,6 +8,8 @@ const GEMINI_BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta"
 pub struct TagResult {
     pub tags: Vec<String>,
     pub summary: String,
+    #[serde(default)]
+    pub title: Option<String>,
 }
 
 #[derive(Clone)]
@@ -62,7 +64,7 @@ impl GeminiClient {
         let body = serde_json::json!({
             "system_instruction": {
                 "parts": [{
-                    "text": "You are a bookmark tagging assistant. Analyze the given webpage info and return tags and a summary.\n\nRules for tags:\n- 5 to 8 tags maximum\n- All lowercase, no spaces (use hyphens)\n- Be specific\n- Include: topic, tool-type, use-case, language/framework if relevant"
+                    "text": "You are a bookmark tagging assistant. Analyze the given webpage info and return a clean title, tags, and a summary.\n\nRules for title:\n- Generate a concise, descriptive title for the webpage based on the URL and any available info\n- If the given title looks like a real page title, keep it as-is\n- If the title is generic (e.g. 'Just a moment', 'Home', 'Loading'), infer a better one from the URL and description\n\nRules for tags:\n- 5 to 8 tags maximum\n- All lowercase, no spaces (use hyphens)\n- Be specific\n- Include: topic, tool-type, use-case, language/framework if relevant"
                 }]
             },
             "contents": [{
@@ -74,13 +76,14 @@ impl GeminiClient {
                 "responseSchema": {
                     "type": "OBJECT",
                     "properties": {
+                        "title": { "type": "STRING" },
                         "tags": {
                             "type": "ARRAY",
                             "items": { "type": "STRING" }
                         },
                         "summary": { "type": "STRING" }
                     },
-                    "required": ["tags", "summary"]
+                    "required": ["title", "tags", "summary"]
                 }
             }
         });
@@ -150,6 +153,7 @@ impl GeminiClient {
                 let result: TagResult = serde_json::from_str(text).unwrap_or(TagResult {
                     tags: vec!["uncategorized".to_string()],
                     summary: "No summary available.".to_string(),
+                    title: None,
                 });
 
                 return Ok(result);
@@ -264,6 +268,7 @@ impl GeminiClient {
                         TagResult {
                             tags: item.tags,
                             summary: item.summary,
+                            title: None,
                         },
                     );
                 }

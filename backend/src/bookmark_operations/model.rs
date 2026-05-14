@@ -131,3 +131,22 @@ pub async fn reprocess_weak_bookmarks(
     let count = service::reprocess_weak(&state, user_id).await?;
     Ok(Json(json!({ "dispatched": count })).into_response())
 }
+
+/// POST /api/v1/bookmarks/reprocess-all
+pub async fn reprocess_all_bookmarks(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<ObjectId>,
+) -> Result<Response, AppError> {
+    let count = service::reprocess_all(&state, user_id).await?;
+    Ok(Json(json!({ "dispatched": count })).into_response())
+}
+
+/// POST /api/v1/bookmarks/:id/reprocess
+pub async fn reprocess_single_bookmark(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<ObjectId>,
+    Path(id): Path<String>,
+) -> Result<Response, AppError> {
+    service::reprocess_single(&state, user_id, &id).await?;
+    Ok(Json(json!({ "dispatched": true, "id": id })).into_response())
+}

@@ -158,15 +158,22 @@ pub async fn create_bookmark(
 pub async fn process_bookmark(state: &AppState, id: ObjectId, url: Option<String>) -> anyhow::Result<()> {
     let collection = state.collection::<Bookmark>("bookmarks");
 
+    let existing = collection
+        .find_one(doc! { "_id": id })
+        .await?
+        .ok_or_else(|| anyhow::anyhow!("Bookmark not found while processing"))?;
+
     let mut update_doc = doc! {};
+    let effective_url = url.or_else(|| existing.url.clone());
 
     // 1. Fetch metadata if URL provided
-    if let Some(ref url) = url {
+    if let Some(ref url) = effective_url {
         match meta_scraper::fetch_metadata(url).await {
             Ok(meta) => {
                 let scraped_domain = meta.domain.as_deref();
                 let title_candidate = meta.title.as_deref().unwrap_or("");
 
+                // Only use scraped title if it's actually good — never overwrite with garbage
                 if !title_candidate.is_empty()
                     && !meta_scraper::is_low_quality_title(title_candidate, scraped_domain)
                 {
@@ -174,9 +181,8 @@ pub async fn process_bookmark(state: &AppState, id: ObjectId, url: Option<String
                 } else if let Ok(parsed_url) = url::Url::parse(url) {
                     if let Some(path_title) = meta_scraper::title_from_url_path(&parsed_url) {
                         update_doc.insert("title", path_title);
-                    } else if let Some(domain) = scraped_domain {
-                        update_doc.insert("title", domain.to_string());
                     }
+                    // Otherwise keep existing title — don't overwrite with domain name
                 }
 
                 if let Some(d) = &meta.description { update_doc.insert("description", d); }
@@ -199,18 +205,43 @@ pub async fn process_bookmark(state: &AppState, id: ObjectId, url: Option<String
     }
 
     // 2. AI tagging & summary
-    let title = update_doc.get_str("title").unwrap_or("").to_string();
-    let description = update_doc.get_str("description").unwrap_or("").to_string();
-    let url_str = url.as_deref().unwrap_or("");
+    let current_title = update_doc
+        .get_str("title")
+        .ok()
+        .filter(|t| !t.trim().is_empty())
+        .map(ToString::to_string)
+        .unwrap_or_else(|| existing.title.clone());
+    let description = update_doc
+        .get_str("description")
+        .ok()
+        .filter(|d| !d.trim().is_empty())
+        .map(ToString::to_string)
+        .or_else(|| existing.description.clone())
+        .unwrap_or_default();
+    let url_str = effective_url.as_deref().unwrap_or("");
 
     if !state.config.gemini_api_keys.is_empty() {
-        match state.gemini.generate_tags_and_summary(&title, &description, url_str).await {
+        match state.gemini.generate_tags_and_summary(&current_title, &description, url_str).await {
             Ok(result) => {
+                // Use AI-generated title if current title is low-quality
+                let title_is_weak = meta_scraper::is_low_quality_title(
+                    &current_title,
+                    existing.domain.as_deref(),
+                );
+                if let Some(ref ai_title) = result.title {
+                    if title_is_weak && !ai_title.trim().is_empty() {
+                        update_doc.insert("title", ai_title.as_str());
+                    }
+                }
+
                 update_doc.insert("tags", &result.tags);
                 update_doc.insert("ai_summary", &result.summary);
 
-                // 3. Generate embedding
-                let embed_text = format!("{} {} {}", title, result.summary, result.tags.join(" "));
+                // 3. Generate embedding — use best available title
+                let final_title = update_doc
+                    .get_str("title")
+                    .unwrap_or(&current_title);
+                let embed_text = format!("{} {} {}", final_title, result.summary, result.tags.join(" "));
                 match state.gemini.generate_embedding(&embed_text).await {
                     Ok(embedding) => { update_doc.insert("embedding", embedding); }
                     Err(e) => tracing::warn!("Embedding generation failed: {}", e),
@@ -582,3 +613,90 @@ pub async fn reprocess_weak(
     tracing::info!("reprocess_weak: dispatched {} jobs for user {}", count, user_id);
     Ok(count)
 }
+
+pub async fn reprocess_all(
+    state: &AppState,
+    user_id: ObjectId,
+) -> Result<u64, AppError> {
+    let collection = state.collection::<Bookmark>("bookmarks");
+    let mut cursor = collection.find(doc! { "user_id": user_id }).await?;
+    let mut count = 0u64;
+
+    while cursor.advance().await? {
+        let bookmark = cursor.deserialize_current()?;
+        let id = match bookmark.id {
+            Some(id) => id,
+            None => continue,
+        };
+
+        let bg_state = state.clone();
+        let bg_url = bookmark.url.clone();
+
+        tokio::spawn(async move {
+            if let Err(e) = process_bookmark(&bg_state, id, bg_url).await {
+                tracing::error!("reprocess_all: {} failed: {}", id, e);
+            }
+        });
+        count += 1;
+    }
+
+    tracing::info!("reprocess_all: dispatched {} jobs for user {}", count, user_id);
+    Ok(count)
+}
+
+pub async fn reprocess_single(
+    state: &AppState,
+    user_id: ObjectId,
+    id: &str,
+) -> Result<(), AppError> {
+    let oid = ObjectId::parse_str(id)?;
+    let collection = state.collection::<Bookmark>("bookmarks");
+
+    let bookmark = collection
+        .find_one(doc! { "_id": oid, "user_id": user_id })
+        .await?
+        .ok_or_else(|| AppError::NotFound("Bookmark not found".into()))?;
+
+    let bookmark_id = bookmark
+        .id
+        .ok_or_else(|| AppError::Internal("Bookmark is missing _id".into()))?;
+
+    if state.config.gemini_api_keys.is_empty() {
+        return Err(AppError::Internal("No Gemini API keys configured".into()));
+    }
+
+    let bg_state = state.clone();
+    let title = bookmark.title.clone();
+    let description = bookmark.description.clone().unwrap_or_default();
+    let url_str = bookmark.url.clone().unwrap_or_default();
+
+    tokio::spawn(async move {
+        match bg_state.gemini.generate_tags_and_summary(&title, &description, &url_str).await {
+            Ok(result) => {
+                let mut update_doc = doc! { "updated_at": Utc::now() };
+
+                // Use AI title if it returned one and current title is weak
+                if let Some(ref ai_title) = result.title {
+                    if !ai_title.trim().is_empty() {
+                        update_doc.insert("title", ai_title.as_str());
+                    }
+                }
+
+                if let Err(e) = bg_state.collection::<Bookmark>("bookmarks")
+                    .update_one(doc! { "_id": bookmark_id }, doc! { "$set": update_doc })
+                    .await
+                {
+                    tracing::error!("reprocess_single: DB update failed for {}: {}", bookmark_id, e);
+                } else {
+                    tracing::info!("reprocess_single: updated title for {}", bookmark_id);
+                }
+            }
+            Err(e) => {
+                tracing::error!("reprocess_single: AI call failed for {}: {}", bookmark_id, e);
+            }
+        }
+    });
+
+    Ok(())
+}
+  

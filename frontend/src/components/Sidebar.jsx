@@ -1,5 +1,5 @@
-import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bookmark, Plus, Upload, Settings, X, User, Key, Palette, Download, ChevronDown } from 'lucide-react';
+import { NavLink, Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Bookmark, Plus, Upload, Settings, X, User, Palette, Download, ChevronDown, Wand2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { TextReveal } from './magicui/TextReveal';
 import { useState } from 'react';
@@ -12,16 +12,18 @@ const navLinks = [
 
 const settingsSubPages = [
   { id: 'account', label: 'Account', icon: User },
-  { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'import-export', label: 'Import/Export', icon: Download },
+  { id: 'data-quality', label: 'Data Quality', icon: Wand2 },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const isSettingsActive = location.pathname === '/settings';
+  const activeSettingsSection = searchParams.get('section') || 'account';
 
   return (
     <>
@@ -123,7 +125,12 @@ export default function Sidebar({ isOpen, onClose }) {
                         navigate(`/settings?section=${id}`);
                         if (window.innerWidth < 1024) onClose();
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-all"
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all',
+                        isSettingsActive && activeSettingsSection === id
+                          ? 'text-accent-light bg-accent/10'
+                          : 'text-text-muted hover:text-text-primary hover:bg-bg-elevated'
+                      )}
                     >
                       <Icon className="w-3.5 h-3.5" />
                       {label}

@@ -30,7 +30,7 @@ export function useBookmarks({
       const { data } = await api.get(`/bookmarks?${params.toString()}`);
       return data;
     },
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000,
     refetchInterval: (query) => {
       const data = query.state.data;
       const hasProcessing = data?.bookmarks?.some(b => b.status === 'processing');
@@ -81,6 +81,19 @@ export function useDeleteBookmark() {
   return useMutation({
     mutationFn: async (id) => {
       await api.delete(`/bookmarks/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+    },
+  });
+}
+
+export function useReprocessBookmark() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const { data } = await api.post(`/bookmarks/${id}/reprocess`);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });

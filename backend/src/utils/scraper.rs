@@ -83,27 +83,57 @@ pub fn is_low_quality_title(title: &str, domain: Option<&str>) -> bool {
     if t.is_empty() || t.len() < 4 {
         return true;
     }
+
+    // Normalize: lowercase and strip trailing punctuation/ellipsis
+    let t_lower = t.to_lowercase();
+    let normalized = t_lower
+        .trim_end_matches("...")
+        .trim_end_matches('…')
+        .trim_end_matches(['.', '!', '?', '-', '|'])
+        .trim();
+
     // Matches domain name (with or without TLD)
     if let Some(d) = domain {
         let d_lower = d.to_lowercase();
-        let t_lower = t.to_lowercase();
-        if t_lower == d_lower
-            || t_lower == d.split('.').next().unwrap_or("").to_lowercase()
+        let d_stem = d.split('.').next().unwrap_or("").to_lowercase();
+        if normalized == d_lower
+            || normalized == d_stem
+            || t_lower == d_lower
+            || t_lower == d_stem
         {
             return true;
         }
     }
-    // Generic single-word page titles
-    let generic: &[&str] = &[
+
+    // Generic low-quality titles (exact match after normalization)
+    let generic_exact: &[&str] = &[
         "home", "index", "untitled", "untitled document",
         "404", "403", "not found", "error", "loading",
         "please wait", "redirecting", "just a moment",
-        "attention required", "access denied", "processing...",
+        "attention required", "access denied", "processing",
+        "forbidden", "unauthorized", "bad gateway",
+        "service unavailable", "page not found",
     ];
-    let t_lower = t.to_lowercase();
-    if generic.iter().any(|&g| t_lower == g) {
+    if generic_exact.iter().any(|&g| normalized == g || t_lower == g) {
         return true;
     }
+
+    // Patterns that indicate bot-check / security pages (prefix match)
+    let generic_prefix: &[&str] = &[
+        "just a moment",
+        "checking your browser",
+        "verify you are human",
+        "security check",
+        "attention required",
+        "one more step",
+        "please enable",
+        "you are being redirected",
+        "vercel security",
+    ];
+    if generic_prefix.iter().any(|&p| normalized.starts_with(p)) {
+        return true;
+    }
+
     false
 }
 

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { User, Palette, Download, Upload, Eye, EyeOff, Check, Loader2, Sun, Moon, Monitor, Wand2 } from 'lucide-react';
+import { User, Palette, Download, Upload, Eye, EyeOff, Check, Loader2, Sun, Moon, Monitor, Wand2, Search, X, Info, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ACCENT_COLORS } from '../lib/constants';
@@ -8,7 +8,7 @@ import useAuthStore from '../store/useAuthStore';
 import { useTheme } from '../components/ThemeProvider';
 import { Dock, DockIcon } from '../components/magicui/Dock';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { cn } from '../lib/utils';
+import { cn, resolveOid } from '../lib/utils';
 import api from '../lib/api';
 import { toast } from 'sonner';
 
@@ -24,6 +24,17 @@ export default function SettingsPage() {
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState(() => searchParams.get('section') || 'account');
   const [reprocessing, setReprocessing] = useState(false);
+  const [reprocessingAll, setReprocessingAll] = useState(false);
+  const [reprocessingSelected, setReprocessingSelected] = useState(false);
+  const [dataQualityMode, setDataQualityMode] = useState('all');
+  const [bookmarkSearch, setBookmarkSearch] = useState('');
+  const [selectedBookmarkId, setSelectedBookmarkId] = useState('');
+  const [bookmarksForSelect, setBookmarksForSelect] = useState([]);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const infoRef = useRef(null);
   const [exportingJson, setExportingJson] = useState(false);
   const [exportingHtml, setExportingHtml] = useState(false);
 
@@ -49,6 +60,65 @@ export default function SettingsPage() {
       toast.error('Failed to start reprocessing');
     } finally {
       setReprocessing(false);
+    }
+  };
+
+  const loadBookmarksForSelection = async () => {
+    setLoadingBookmarks(true);
+    try {
+      const { data } = await api.get('/bookmarks?all=true');
+      const normalized = (data?.bookmarks || [])
+        .map((b) => {
+          const id = resolveOid(b.id ?? b._id);
+          const title = (b.title || '').trim();
+          const url = (b.url || '').trim();
+          const label = title || url || 'Untitled bookmark';
+          const searchText = `${label} ${url}`.toLowerCase();
+          return { id, title, url, label, searchText };
+        })
+        .filter((b) => !!b.id);
+
+      setBookmarksForSelect(normalized);
+
+      // Keep selected value only if it still exists in refreshed list.
+      if (selectedBookmarkId && !normalized.some((b) => b.id === selectedBookmarkId)) {
+        setSelectedBookmarkId('');
+      }
+    } catch {
+      toast.error('Failed to load bookmarks for selection');
+    } finally {
+      setLoadingBookmarks(false);
+    }
+  };
+
+  const handleReprocessAll = async () => {
+    setReprocessingAll(true);
+    try {
+      const { data } = await api.post('/bookmarks/reprocess-all');
+      toast.success(`Dispatched ${data.dispatched} bookmark(s) for full reprocess`);
+    } catch {
+      toast.error('Failed to start full reprocess');
+    } finally {
+      setReprocessingAll(false);
+    }
+  };
+
+  const handleReprocessSelected = async () => {
+    if (!selectedBookmarkId) {
+      toast.error('Please select a bookmark first');
+      return;
+    }
+
+    setReprocessingSelected(true);
+    try {
+      await api.post(`/bookmarks/${selectedBookmarkId}/reprocess`);
+      toast.success('Selected bookmark sent for AI reprocessing');
+      setSelectedBookmarkId('');
+      setBookmarkSearch('');
+    } catch {
+      toast.error('Failed to reprocess selected bookmark');
+    } finally {
+      setReprocessingSelected(false);
     }
   };
 
@@ -172,6 +242,41 @@ export default function SettingsPage() {
     }
   }, [searchParams]);
 
+  // Fetch bookmarks once when data-quality section is first opened
+  const hasFetchedRef = useRef(false);
+  useEffect(() => {
+    if (activeSection === 'data-quality' && !hasFetchedRef.current && !loadingBookmarks) {
+      hasFetchedRef.current = true;
+      loadBookmarksForSelection();
+    }
+  }, [activeSection]);
+
+  // Close dropdown / info tooltip on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+      if (infoRef.current && !infoRef.current.contains(e.target)) {
+        setInfoOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+  }, []);
+
+  const filteredBookmarks = bookmarksForSelect.filter((b) => {
+    const q = bookmarkSearch.toLowerCase().trim();
+    if (!q) return true;
+    return b.searchText.includes(q);
+  });
+
+  const selectedBookmark = bookmarksForSelect.find((b) => b.id === selectedBookmarkId) || null;
+
   return (
     <div className="h-full overflow-y-auto no-scrollbar">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="h-full">
@@ -214,15 +319,17 @@ export default function SettingsPage() {
                       <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Email</label>
                       <p className="text-sm text-text-primary mt-1">{user?.email || 'Not signed in'}</p>
                     </div>
-                    <div className="space-y-2">
+                    <form onSubmit={(e) => { e.preventDefault(); handleChangePassword(); }} className="space-y-2">
                       <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Change Password</label>
 
+                      <input type="text" autoComplete="username" value={user?.email || ''} readOnly hidden aria-hidden="true" tabIndex={-1} />
                       <div className="space-y-2">
                         <div className="relative">
                           <Input
                             type={showCurrentPassword ? 'text' : 'password'}
                             placeholder="Current password"
                             className="w-full pr-10"
+                            autoComplete="current-password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
                           />
@@ -241,6 +348,7 @@ export default function SettingsPage() {
                             type={showNewPassword ? 'text' : 'password'}
                             placeholder="New password"
                             className="w-full pr-10"
+                            autoComplete="new-password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                           />
@@ -256,14 +364,14 @@ export default function SettingsPage() {
                       </div>
 
                       <Button
+                        type="submit"
                         size="sm"
                         className="mt-2"
-                        onClick={handleChangePassword}
                         disabled={changingPassword}
                       >
                         {changingPassword ? 'Updating...' : 'Update Password'}
                       </Button>
-                    </div>
+                    </form>
 
                   </div>
                 </div>
@@ -355,30 +463,209 @@ export default function SettingsPage() {
 
               {activeSection === 'data-quality' && (
                 <div className="rounded-xl bg-bg-elevated border border-border p-6 sm:p-8 space-y-6">
-                  <h2 className="text-title-sm text-text-primary">Data Quality</h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-title-sm text-text-primary">Data Quality</h2>
+                    <button
+                      type="button"
+                      onClick={loadBookmarksForSelection}
+                      disabled={loadingBookmarks}
+                      className="p-2 rounded-lg text-text-muted hover:text-accent hover:bg-accent/10 transition-all disabled:opacity-50"
+                      title="Refresh bookmarks list"
+                    >
+                      <RefreshCw className={cn('w-4 h-4', loadingBookmarks && 'animate-spin')} />
+                    </button>
+                  </div>
                   <div className="space-y-4">
                     <div className="rounded-lg border border-border bg-bg-secondary p-4 space-y-3">
                       <div className="flex items-start gap-3">
                         <Wand2 className="w-5 h-5 text-accent mt-0.5 shrink-0" />
-                        <div>
+                        <div className="flex items-center gap-1.5">
                           <p className="text-sm font-medium text-text-primary">Reprocess Weak Titles</p>
-                          <p className="text-xs text-text-muted mt-1">
-                            Finds bookmarks with missing, generic, or low-quality titles (e.g. "Home", "404",
-                            or stuck in "Processing...") and reruns metadata fetch + AI enrichment on them.
-                          </p>
+                          <div ref={infoRef} className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setInfoOpen((v) => !v)}
+                              onMouseEnter={() => setInfoOpen(true)}
+                              onMouseLeave={() => setInfoOpen(false)}
+                              className="shrink-0 rounded-full p-0.5 text-accent hover:text-accent-light transition-colors focus:outline-none"
+                              aria-label="More info"
+                            >
+                              <Info className="w-3.5 h-3.5 drop-shadow-[0_0_4px_var(--color-accent)]" />
+                            </button>
+                            {infoOpen && (
+                              <div className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-2 z-30 w-[min(280px,calc(100vw-2rem))] rounded-xl bg-bg-elevated border border-border shadow-ambient p-3 text-xs text-text-muted leading-relaxed">
+                                Finds bookmarks with missing, generic, or low-quality titles
+                                (e.g. &quot;Home&quot;, &quot;404&quot;, or stuck in &quot;Processing...&quot;)
+                                and reruns metadata fetch + AI enrichment on them.
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={handleReprocessWeak}
-                        disabled={reprocessing}
-                      >
-                        {reprocessing ? (
-                          <><Loader2 className="w-4 h-4 animate-spin" />Running...</>
-                        ) : (
-                          <><Wand2 className="w-4 h-4" />Run Reprocess</>
-                        )}
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setDataQualityMode('all')}
+                          className={cn(
+                            'px-3 py-1.5 rounded-md text-xs font-medium border transition-colors',
+                            dataQualityMode === 'all'
+                              ? 'bg-accent/10 text-accent-light border-border-accent'
+                              : 'bg-bg-elevated text-text-muted border-border hover:text-text-primary'
+                          )}
+                        >
+                          Run Process All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDataQualityMode('selected')}
+                          className={cn(
+                            'px-3 py-1.5 rounded-md text-xs font-medium border transition-colors',
+                            dataQualityMode === 'selected'
+                              ? 'bg-accent/10 text-accent-light border-border-accent'
+                              : 'bg-bg-elevated text-text-muted border-border hover:text-text-primary'
+                          )}
+                        >
+                          Run Selected
+                        </button>
+                      </div>
+
+                      {dataQualityMode === 'all' ? (
+                        <div className="space-y-2">
+                          <Button
+                            size="sm"
+                            onClick={handleReprocessAll}
+                            disabled={reprocessingAll || reprocessing || reprocessingSelected}
+                          >
+                            {reprocessingAll ? (
+                              <><Loader2 className="w-4 h-4 animate-spin" />Running All...</>
+                            ) : (
+                              <><Wand2 className="w-4 h-4" />Run Process All</>
+                            )}
+                          </Button>
+                          <p className="text-[11px] text-text-faint">This dispatches every bookmark for AI reprocessing.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {/* Searchable bookmark picker */}
+                          <div ref={dropdownRef} className="relative">
+                            <div
+                              className={cn(
+                                'flex items-center gap-2 w-full rounded-xl bg-bg-elevated border px-3 py-2.5 text-sm transition-colors cursor-text',
+                                dropdownOpen ? 'border-accent shadow-glow' : 'border-border'
+                              )}
+                              onClick={() => setDropdownOpen(true)}
+                            >
+                              <Search className="w-4 h-4 text-text-faint shrink-0" />
+                              <input
+                                type="text"
+                                placeholder={selectedBookmark ? selectedBookmark.label : 'Search bookmarks by title or URL...'}
+                                value={bookmarkSearch}
+                                onChange={(e) => {
+                                  setBookmarkSearch(e.target.value);
+                                  setDropdownOpen(true);
+                                }}
+                                onFocus={() => setDropdownOpen(true)}
+                                className="flex-1 bg-transparent text-text-primary placeholder:text-text-faint focus:outline-none text-sm min-w-0"
+                              />
+                              {(bookmarkSearch || selectedBookmarkId) && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setBookmarkSearch('');
+                                    setSelectedBookmarkId('');
+                                  }}
+                                  className="shrink-0 text-text-faint hover:text-text-primary transition-colors"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Dropdown list */}
+                            {dropdownOpen && (
+                              <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl bg-bg-elevated border border-border shadow-ambient overflow-hidden">
+                                {loadingBookmarks ? (
+                                  <div className="flex items-center justify-center gap-2 py-4 text-xs text-text-muted">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading bookmarks...
+                                  </div>
+                                ) : filteredBookmarks.length === 0 ? (
+                                  <div className="py-4 flex flex-col items-center gap-2 text-xs text-text-faint">
+                                    <span>No bookmarks match your search.</span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); loadBookmarksForSelection(); }}
+                                      disabled={loadingBookmarks}
+                                      className="inline-flex items-center gap-1.5 text-accent hover:text-accent-light transition-colors"
+                                    >
+                                      <RefreshCw className="w-3 h-3" /> Refresh
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <ul className="max-h-[220px] overflow-y-auto overscroll-contain">
+                                    {filteredBookmarks.map((b) => (
+                                      <li key={b.id}>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedBookmarkId(b.id);
+                                            setBookmarkSearch('');
+                                            setDropdownOpen(false);
+                                          }}
+                                          className={cn(
+                                            'w-full text-left px-3 py-2.5 flex flex-col gap-0.5 transition-colors',
+                                            selectedBookmarkId === b.id
+                                              ? 'bg-accent/10 text-accent-light'
+                                              : 'text-text-primary hover:bg-bg-secondary active:bg-bg-secondary'
+                                          )}
+                                        >
+                                          <span className="text-sm font-medium truncate">{b.title || 'Untitled'}</span>
+                                          {b.url && <span className="text-[11px] text-text-faint truncate">{b.url}</span>}
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {selectedBookmark && (
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/5 border border-accent/10 text-xs text-text-muted">
+                              <Check className="w-3.5 h-3.5 text-accent shrink-0" />
+                              <span className="truncate">Selected: <span className="text-text-primary font-medium">{selectedBookmark.label}</span></span>
+                            </div>
+                          )}
+
+                          <Button
+                            size="sm"
+                            onClick={handleReprocessSelected}
+                            disabled={!selectedBookmarkId || loadingBookmarks || reprocessingSelected || reprocessingAll || reprocessing}
+                          >
+                            {reprocessingSelected ? (
+                              <><Loader2 className="w-4 h-4 animate-spin" />Reprocessing Selected...</>
+                            ) : (
+                              <><Wand2 className="w-4 h-4" />Run Selected Reprocess</>
+                            )}
+                          </Button>
+                          <p className="text-[11px] text-text-faint">Only the chosen bookmark will be reprocessed with current data and Gemini.</p>
+                        </div>
+                      )}
+
+                      <div className="pt-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleReprocessWeak}
+                          disabled={reprocessing || reprocessingAll || reprocessingSelected}
+                        >
+                          {reprocessing ? (
+                            <><Loader2 className="w-4 h-4 animate-spin" />Running Weak-only...</>
+                          ) : (
+                            <><Wand2 className="w-4 h-4" />Run Weak-Only Reprocess</>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
