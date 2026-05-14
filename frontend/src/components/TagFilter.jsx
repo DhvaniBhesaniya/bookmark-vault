@@ -10,6 +10,7 @@ export default function TagFilter({
   onFilterChange,
   onTagToggle,
   settingsNode,
+  totalBookmarks,
 }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   // toolsSelected = true → sections visible. Default = visible.
@@ -90,6 +91,18 @@ export default function TagFilter({
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Total bookmarks count */}
+      {totalBookmarks !== undefined && (
+        <div className="shrink-0 mt-auto pt-4 border-t border-border">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Total Bookmarks</span>
+            <span className="text-sm font-bold text-accent drop-shadow-[0_0_6px_var(--color-accent)] animate-pulse">
+              {totalBookmarks}
+            </span>
+          </div>
         </div>
       )}
     </div>

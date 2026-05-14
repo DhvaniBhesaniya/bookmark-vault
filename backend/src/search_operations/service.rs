@@ -73,11 +73,11 @@ pub async fn hybrid_search(
         effective_min_score,
     );
 
-    for (rank, doc) in results.iter().take(20).enumerate() {
-        let title = doc.get_str("title").unwrap_or("untitled");
-        let score = doc.get_f64("score").unwrap_or(0.0);
-        tracing::info!("search_rank={} score={:.4} title={}", rank + 1, score, title);
-    }
+    // for (rank, doc) in results.iter().take(20).enumerate() {
+    //     let title = doc.get_str("title").unwrap_or("untitled");
+    //     let score = doc.get_f64("score").unwrap_or(0.0);
+     // tracing::info!("search_rank={} score={:.4} title={}", rank + 1, score, title);
+    // }
 
     let count = results.len();
 
