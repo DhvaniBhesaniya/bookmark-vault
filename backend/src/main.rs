@@ -8,6 +8,7 @@ mod routes;
 
 use tower_http::cors::{CorsLayer, Any};
 use tower_http::trace::TraceLayer;
+use tower_http::services::{ServeDir, ServeFile};
 use std::net::SocketAddr;
 use crate::utils::config::Config;
 use crate::utils::db::AppState;
@@ -22,7 +23,15 @@ async fn main() -> anyhow::Result<()> {
 
     let state = AppState::new(config).await?;
 
+    // Serve frontend static files with SPA fallback
+    // In Docker: /usr/local/share/frontend/dist, locally: ../frontend/dist
+    let frontend_dir = std::env::var("FRONTEND_DIST_DIR")
+        .unwrap_or_else(|_| "../frontend/dist".to_string());
+    let spa_service = ServeDir::new(&frontend_dir)
+        .not_found_service(ServeFile::new(format!("{}/index.html", frontend_dir)));
+
     let app = routes::build_router(state)
+        .fallback_service(spa_service)
         .layer(
             CorsLayer::new()
                 .allow_origin(

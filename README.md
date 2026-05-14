@@ -1,88 +1,203 @@
+<div align="center">
+
 # 🔖 Bookmarkvault
 
-Bookmarkvault is an AI-powered bookmark management system built with Rust (Axum), React (Vite + Tailwind), and MongoDB Atlas. It features semantic search, automatic tagging via Gemini, and a robust "Nocturne Noir" dark mode design.
+**AI-powered bookmark manager with semantic search, smart tagging, and a premium dark UI.**
 
-## Features
+Built with **Rust (Axum)** · **React (Vite + Tailwind)** · **MongoDB Atlas** · **Google Gemini AI**
 
-- **Nocturne Noir Design**: Premium dark mode UI with purple accents and glassmorphism.
-- **AI Tagging & Summaries**: Automatically fetches URL metadata and generates smart tags and concise summaries using Gemini 2.5 Flash.
-- **Semantic Search**: Vector-based search utilizing Gemini embeddings.
-- **Bulk Import**: Import bookmarks from Chrome/Firefox HTML exports with background processing.
-- **Full-Stack Performance**: Fast, concurrent Rust backend paired with a snappy React frontend.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Architecture
+</div>
 
-- **Frontend**: React, Vite, Tailwind CSS, Radix UI, Framer Motion, Zustand, TanStack Query.
-- **Backend**: Rust, Axum, MongoDB Driver, Reqwest, Scraper, Jsonwebtoken, Bcrypt.
-- **Database**: MongoDB Atlas.
-- **AI Integration**: Google Gemini API.
+---
 
-## Setup Instructions
+![Main Dashboard](Screenshots/main.png)
+
+## ✨ Features
+
+### 🤖 AI-Powered Intelligence
+- **Auto Tagging** — Gemini AI generates relevant tags for every bookmark automatically
+- **AI Summaries** — Get concise, one-line summaries of any saved URL
+- **Semantic Search** — Find bookmarks by meaning, not just keywords, using vector embeddings
+- **Smart Metadata** — Automatically fetches title, description, favicon, and OG image from URLs
+
+### 📂 Organization
+- **Collections/Folders** — Organize bookmarks into nested collections
+- **Favorites** — Quick-access your most important bookmarks
+- **Tag Filtering** — Filter bookmarks by AI-generated or custom tags
+- **Duplicate Detection** — Automatically detects and tracks duplicate URLs per domain
+
+### 🔍 Hybrid Search
+- **Vector + Text** — Combines 70% semantic similarity with 30% text relevance
+- **Automatic Fallback** — Gracefully degrades from vector → text → regex search
+- **Collection-Aware** — Search within specific collections or across all bookmarks
+
+### 📥 Bulk Import
+- **Browser Export Support** — Import HTML bookmark exports from Chrome, Firefox, Edge, Safari
+- **Background Processing** — Imports run asynchronously with real-time progress tracking
+- **Batch AI Enrichment** — Tags and summaries generated in batches during import
+
+### 🎨 Premium UI
+- **Nocturne Noir Design** — Dark-first aesthetic with glassmorphism and ambient shadows
+- **Light & Dark Themes** — Full theme system with light, dark, and system-auto modes
+- **Responsive** — Works beautifully on desktop, tablet, and mobile
+- **Command Palette** — Quick navigation with `⌘K` / `Ctrl+K` shortcut
+- **Smooth Animations** — Framer Motion powered transitions throughout
+
+---
+
+## 📸 Screenshots
+
+<details>
+<summary><strong>Desktop Views</strong></summary>
+
+| Main Dashboard | Bookmark Details |
+|:-:|:-:|
+| ![Main](Screenshots/main.png) | ![Details](Screenshots/bookmark-details.png) |
+
+| Add Bookmark | Import Bookmarks |
+|:-:|:-:|
+| ![Add](Screenshots/add-single-bookmark.png) | ![Import](Screenshots/import-bookmark.png) |
+
+| Settings | Command Palette (⌘K) |
+|:-:|:-:|
+| ![Settings](Screenshots/settings.png) | ![Command Palette](Screenshots/win+k.png) |
+
+</details>
+
+<details>
+<summary><strong>Mobile Views</strong></summary>
+
+| Home | Bookmark Details | Settings |
+|:-:|:-:|:-:|
+| ![Mobile Main](Screenshots/mobile-view-main.png) | ![Mobile Details](Screenshots/mobile-view-bokmark-details.png) | ![Mobile Settings](Screenshots/mobile-view-settings.png) |
+
+</details>
+
+---
+
+## 🏗️ Tech Stack
+
+### Backend (Rust)
+| Technology | Purpose |
+|---|---|
+| [Axum](https://github.com/tokio-rs/axum) 0.7 | HTTP framework with async handlers |
+| [Tokio](https://tokio.rs/) 1.x | Async runtime |
+| [MongoDB Driver](https://github.com/mongodb/mongo-rust-driver) 3.x | Database client |
+| [Tower-HTTP](https://github.com/tower-rs/tower-http) 0.5 | CORS, tracing, static file serving |
+| [Reqwest](https://github.com/seanmonstar/reqwest) 0.12 | HTTP client for scraping & AI calls |
+| [jsonwebtoken](https://github.com/Keats/jsonwebtoken) 9.x | JWT authentication |
+| [bcrypt](https://github.com/Keats/rust-bcrypt) 0.15 | Password hashing |
+| [scraper](https://github.com/causal-agent/scraper) 0.19 | HTML metadata extraction |
+| Google Gemini API | AI tagging, summaries & embeddings |
+
+### Frontend (React)
+| Technology | Purpose |
+|---|---|
+| [React](https://react.dev/) 18.3 | UI framework |
+| [Vite](https://vite.dev/) 8.x | Build tool & dev server |
+| [Tailwind CSS](https://tailwindcss.com/) 3.4 | Utility-first styling |
+| [TanStack Query](https://tanstack.com/query) 5.x | Server state management |
+| [Zustand](https://github.com/pmndrs/zustand) 4.x | Client state management |
+| [Framer Motion](https://www.framer.com/motion/) 11.x | Animations |
+| [Radix UI](https://www.radix-ui.com/) | Accessible UI primitives |
+| [cmdk](https://cmdk.paco.me/) | Command palette |
+| [Axios](https://axios-http.com/) | HTTP client |
+| [React Router](https://reactrouter.com/) 6.x | Client-side routing |
+
+### Infrastructure
+| Technology | Purpose |
+|---|---|
+| MongoDB Atlas | Cloud database + vector search |
+| Render.com | Deployment platform |
+| Docker | Containerized production builds |
+
+---
+
+## 📁 Project Structure
+
+```
+bookmark-vault/
+├── package.json            # Root scripts (build, dev, start)
+├── render.yaml             # Render.com deployment config
+│
+├── backend/                # Rust API server
+│   ├── Cargo.toml
+│   ├── Dockerfile          # Multi-stage build (Node + Rust)
+│   └── src/
+│       ├── main.rs                  # Entry point, static file serving
+│       ├── routes/mod.rs            # Route aggregation
+│       ├── middleware/auth.rs       # JWT auth middleware
+│       ├── auth_operations/         # Register & login
+│       ├── bookmark_operations/     # CRUD, import, reprocess
+│       ├── collection_operations/   # Folder management
+│       ├── search_operations/       # Hybrid search & tags
+│       └── utils/
+│           ├── config.rs            # Environment configuration
+│           ├── db.rs                # MongoDB connection & indexes
+│           ├── errors.rs            # Error types
+│           ├── gemini.rs            # Gemini AI client
+│           └── scraper.rs           # URL metadata scraper
+│
+├── frontend/               # React SPA
+│   ├── package.json
+│   ├── vite.config.js      # Dev proxy → backend
+│   └── src/
+│       ├── components/      # UI components
+│       ├── hooks/           # React Query hooks
+│       ├── pages/           # Route pages
+│       ├── store/           # Zustand auth store
+│       └── lib/             # API client, utils, constants
+│
+└── product-roadmap/        # Planning docs
+```
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js & npm
-- Rust & Cargo
-- MongoDB Atlas cluster
-- Google Gemini API Key
+- **Rust** (stable toolchain) — [Install](https://rustup.rs/)
+- **Node.js** ≥ 18 & npm — [Install](https://nodejs.org/)
+- **MongoDB Atlas** cluster — [Create free cluster](https://www.mongodb.com/atlas)
+- **Google Gemini API Key** — [Get API key](https://aistudio.google.com/apikey)
 
-### Backend Setup
+### 1. Clone the repository
 
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Create a `.env` file based on the required environment variables below.
-3. Run the backend:
-   ```bash
-   cargo run
-   ```
+```bash
+git clone https://github.com/DhvaniBhesaniya/bookmark-vault.git
+cd bookmark-vault
+```
 
-### Frontend Setup
+### 2. Set up environment variables
 
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file based on the required environment variables below.
-4. Run the frontend:
-   ```bash
-   npm run dev
-   ```
-
-## Environment Variables
-
-### Backend (`backend/.env`)
+Create `backend/.env`:
 
 ```env
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority
 DATABASE_NAME=Bookmarkvault
 PORT=8080
 CORS_ORIGIN=http://localhost:5173
-JWT_SECRET=your_super_secret_jwt_key
-GEMINI_API_KEY=your_gemini_api_key
+JWT_SECRET=your-secret-key-change-this
+GEMINI_API_KEY_1=your-gemini-api-key
+# Optional: add more keys for rate-limit resilience
+# GEMINI_API_KEY_2=another-key
+# GEMINI_API_KEY_3=another-key
 ```
 
-### Frontend (`frontend/.env`)
+> **Tip**: You can configure up to 5 Gemini API keys (`GEMINI_API_KEY_1` through `GEMINI_API_KEY_5`) for automatic key rotation when rate limits are hit.
 
-```env
-VITE_API_URL=http://localhost:8080/api/v1
-```
+### 3. Set up MongoDB Vector Search Index
 
-## MongoDB Vector Search Index Setup
+To enable semantic search, create a vector search index in MongoDB Atlas:
 
-To enable semantic search, you must manually create a vector search index in the MongoDB Atlas UI:
-
-1. Go to your Atlas Dashboard.
-2. Select your Database, then the `Bookmarkvault` database, and the `bookmarks` collection.
-3. Go to the "Atlas Search" tab and click "Create Search Index".
-4. Choose "Atlas Vector Search - JSON Editor".
-5. Name the index `vector_index` (this exact name is required by the backend).
-6. Paste the following configuration:
+1. Go to **Atlas Dashboard** → your cluster → **Database** → `Bookmarkvault` → `bookmarks` collection
+2. Navigate to **Atlas Search** tab → **Create Search Index**
+3. Select **Atlas Vector Search — JSON Editor**
+4. Name the index **`vector_index`** (this exact name is required)
+5. Paste the following configuration:
 
 ```json
 {
@@ -101,17 +216,232 @@ To enable semantic search, you must manually create a vector search index in the
 }
 ```
 
-7. Save and wait for the index to build.
+6. Click **Create** and wait for the index to build
 
-## Deployment
+> **Note**: Semantic search works without this index — it will automatically fall back to text search.
 
-This repository includes a `render.yaml` file for deployment to [Render.com](https://render.com).
+### 4. Run the application
 
-1. Connect your GitHub repository to Render.
-2. Go to "Blueprints" and create a new instance using the `render.yaml` file.
-3. Provide the required environment variables when prompted.
-4. Update the `CORS_ORIGIN` in the backend service and the `VITE_API_URL` in the frontend service with the generated URLs.
+#### Option A: Single command (build + run)
 
-## License
+```bash
+npm run dev
+```
 
-MIT
+This builds the frontend and starts the Rust backend on `http://localhost:8080`.
+
+#### Option B: Development with hot reload (two terminals)
+
+**Terminal 1** — Backend:
+```bash
+cd backend
+cargo run
+```
+
+**Terminal 2** — Frontend with hot reload:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend dev server runs on `http://localhost:5173` and proxies `/api` requests to the backend.
+
+#### Option C: Production-style build
+
+```bash
+npm run build    # Build frontend
+npm run start    # Start backend in release mode
+```
+
+Open `http://localhost:8080` — the backend serves both the API and the frontend.
+
+---
+
+## 🔌 API Reference
+
+All endpoints are prefixed with `/api/v1`. Protected routes require a `Bearer` token in the `Authorization` header.
+
+### Authentication (Public)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/auth/register` | Create a new account |
+| `POST` | `/api/v1/auth/login` | Login and receive JWT token |
+
+### Bookmarks (Protected)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/bookmarks` | List bookmarks (paginated, filterable) |
+| `POST` | `/api/v1/bookmarks` | Create a bookmark (async AI processing) |
+| `GET` | `/api/v1/bookmarks/:id` | Get bookmark details |
+| `PUT` | `/api/v1/bookmarks/:id` | Update bookmark fields |
+| `DELETE` | `/api/v1/bookmarks/:id` | Delete a bookmark |
+| `POST` | `/api/v1/bookmarks/import` | Bulk import from HTML file |
+| `GET` | `/api/v1/bookmarks/import/status/:job_id` | Check import job progress |
+| `POST` | `/api/v1/bookmarks/reprocess-weak` | Re-enrich incomplete bookmarks |
+
+### Search (Protected)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/search` | Hybrid semantic + text search |
+| `GET` | `/api/v1/search/tags` | Get all unique tags |
+
+### Collections (Protected)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/collections` | List all collections |
+| `POST` | `/api/v1/collections` | Create a collection |
+| `PUT` | `/api/v1/collections/:id` | Rename a collection |
+| `DELETE` | `/api/v1/collections/:id` | Delete a collection |
+
+### Health
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Server health check |
+
+---
+
+## ⚙️ Environment Variables
+
+### Backend (`backend/.env`)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `MONGODB_URI` | Yes | `mongodb://localhost:27017` | MongoDB connection string |
+| `DATABASE_NAME` | No | `Bookmarkvault` | Database name |
+| `PORT` | No | `8080` | Server port |
+| `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin |
+| `JWT_SECRET` | Yes | `dev-secret-change-me` | Secret for JWT signing |
+| `GEMINI_API_KEY_1`..`5` | Yes* | — | Gemini API keys (rotation support) |
+| `GEMINI_API_KEY` | Yes* | — | Legacy single key fallback |
+| `SEARCH_MIN_SCORE` | No | — | Minimum search relevance (0.0–1.0) |
+| `FRONTEND_DIST_DIR` | No | `../frontend/dist` | Path to frontend build output |
+
+\* At least one Gemini key is needed for AI features. Without it, bookmarks save without tags/summaries/embeddings.
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `VITE_API_URL` | No | `/api/v1` | API base URL (override for split deploys) |
+
+---
+
+## 🐳 Docker
+
+The project uses a multi-stage Dockerfile that builds both frontend and backend into a single image.
+
+```bash
+# Build from the repo root
+docker build -f backend/Dockerfile -t bookmarkvault .
+
+# Run
+docker run -p 8080:8080 \
+  -e MONGODB_URI="your-mongodb-uri" \
+  -e JWT_SECRET="your-secret" \
+  -e GEMINI_API_KEY_1="your-gemini-key" \
+  -e FRONTEND_DIST_DIR="/usr/local/share/frontend/dist" \
+  bookmarkvault
+```
+
+Open `http://localhost:8080` — everything is served from the single container.
+
+---
+
+## 🌐 Deployment (Render.com)
+
+The included `render.yaml` deploys as a **single web service**:
+
+1. Fork/push this repo to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com/) → **Blueprints** → **New Blueprint Instance**
+3. Connect your repository and select the `render.yaml`
+4. Set the required secret environment variables (`MONGODB_URI`, `JWT_SECRET`, `GEMINI_API_KEY_1`)
+5. Deploy — Render builds the Docker image and serves both API + frontend from one URL
+
+---
+
+## 🔄 How It Works
+
+### Bookmark Processing Pipeline
+
+```
+User saves URL
+     │
+     ▼
+┌─────────────┐    Immediate response
+│ Save to DB  │───────────────────────► { id, status: "processing" }
+│ (status:    │
+│  processing)│
+└──────┬──────┘
+       │  Background task
+       ▼
+┌─────────────┐
+│ Scrape URL  │  Fetch title, description, favicon, OG image
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│ Gemini AI   │  Generate tags + summary (JSON mode)
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│ Embedding   │  Generate 3072-dim vector for semantic search
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│ Update DB   │  status: "ready", all fields populated
+└─────────────┘
+```
+
+### Search Architecture
+
+```
+User query: "machine learning tutorials"
+     │
+     ▼
+┌──────────────────┐
+│ Generate query   │  Gemini embedding API
+│ embedding vector │
+└────────┬─────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+┌────────┐ ┌────────┐
+│ Vector │ │ Text   │
+│ Search │ │ Search │
+│  (70%) │ │  (30%) │
+└───┬────┘ └───┬────┘
+    └────┬─────┘
+         ▼
+┌──────────────────┐
+│ Merge & rank     │  Hybrid scoring
+│ results          │
+└──────────────────┘
+```
+
+---
+
+## 🧑‍💻 Development Tips
+
+- **Hot reload**: Run frontend (`npm run dev` in `frontend/`) and backend (`cargo run` in `backend/`) separately for the best DX. Vite proxies API calls automatically.
+- **Command Palette**: Press `⌘K` / `Ctrl+K` to open the command palette for quick navigation.
+- **Multiple Gemini keys**: Configure up to 5 keys to avoid rate limits during bulk import.
+- **Reprocess weak bookmarks**: Use the reprocess endpoint to re-enrich bookmarks that failed initial processing.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [Dhvani Bhesaniya](https://github.com/DhvaniBhesaniya)**
+
+</div>

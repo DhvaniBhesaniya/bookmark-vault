@@ -1,0 +1,12 @@
+{
+  "name": "bookmark-vault",
+  "version": "1.0.0",
+  "description": "Bookmark Vault - save, organize and search bookmarks",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm install && npm run build && cd ../backend && cargo run",
+    "start": "cd backend && cargo run --release"
+  },
+  "author": "Dhvani Bhesaniya",
+  "license": "ISC"
+}

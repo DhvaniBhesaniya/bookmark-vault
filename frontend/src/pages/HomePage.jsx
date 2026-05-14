@@ -92,7 +92,15 @@ export default function HomePage() {
   const handleSave = useCallback(async (edited) => {
     try {
       const id = edited.id || (typeof edited._id === 'object' ? edited._id.$oid : edited._id);
-      await updateBookmark.mutateAsync({ ...edited, id });
+      const payload = {
+        id,
+        title: edited.title,
+        notes: edited.notes,
+        tags: edited.tags,
+        duplicate_links: edited.duplicate_links,
+        is_favorite: edited.is_favorite,
+      };
+      await updateBookmark.mutateAsync(payload);
       toast.success('Bookmark updated');
       handleCloseDetail();
     } catch {
