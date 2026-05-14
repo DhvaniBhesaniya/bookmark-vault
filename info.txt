@@ -47,13 +47,5 @@ Dimension Size         | Quality/Accuracy Retention              | Best Use Case
 768                    | ~90-93% RetentionMaximum Compression    | "Fast/Cheap First-Stage Retrieval. Use this if storage is your absolute bottleneck. It's still surprisingly capable for finding general concepts, but might miss highly nuanced technical queries."
 
 
-use default image for no image in cards and  image not showing properly
-also add a button  for each card like use  default image so it will be changes directly and saved  for that perticular card
-
-
-for singular adding bookmark  let integrate ai like if user dont want to add details hinself then just give url and ai will do  everything and  save it in the last.
-
-
-gemini api     for setting page..
-
-nned to deploy in render with singular url working
+for jwt 
+openssl rand -base64 32   or openssl rand -hex 64   or head -c 32 /dev/urandom | base64
