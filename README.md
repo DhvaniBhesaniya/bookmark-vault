@@ -44,7 +44,15 @@ Built with **Rust (Axum)** · **React (Vite + Tailwind)** · **MongoDB Atlas** �
 - **HTML Export** — Download browser-compatible Netscape Bookmark HTML
 
 ### 🛠️ Data Quality Tools
-- **Reprocess Weak Titles** — Trigger AI re-enrichment for low-quality or stuck bookmarks from **Settings → Data Quality**
+- **Reprocess All** — Dispatch every bookmark for full AI re-enrichment (scrape + tags + summary + embedding)
+- **Reprocess Selected** — Pick a single bookmark and let AI generate a better title on demand
+- **Reprocess Weak Titles** — Auto-detect bookmarks with low-quality titles (e.g. "Just a moment...", "404", Cloudflare pages) and re-enrich them
+- **Smart Title Generation** — AI generates proper titles when scrapers return garbage (Cloudflare challenges, security pages)
+- **Refresh on Demand** — Bookmark list in Data Quality loads once, then refreshes only when you click the refresh button
+
+### 🖼️ Image Preferences
+- **Image Source Selector** — Each bookmark detail has a dropdown overlay to choose between the original OG image or a default placeholder
+- **Per-Bookmark Setting** — Image preference is saved to the database and respected across card grid and detail views
 
 ### 🎨 Premium UI
 - **Nocturne Noir Design** — Dark-first aesthetic with glassmorphism and ambient shadows
@@ -295,6 +303,8 @@ All endpoints are prefixed with `/api/v1`. Protected routes require a `Bearer` t
 | `POST` | `/api/v1/bookmarks/import` | Bulk import from HTML file |
 | `GET` | `/api/v1/bookmarks/import/status/:job_id` | Check import job progress |
 | `POST` | `/api/v1/bookmarks/reprocess-weak` | Re-enrich incomplete bookmarks |
+| `POST` | `/api/v1/bookmarks/reprocess-all` | Dispatch all bookmarks for full reprocess |
+| `POST` | `/api/v1/bookmarks/:id/reprocess` | AI title regeneration for a single bookmark |
 
 ### Search (Protected)
 
@@ -399,7 +409,7 @@ User saves URL
 └──────┬──────┘
        ▼
 ┌─────────────┐
-│ Gemini AI   │  Generate tags + summary (JSON mode)
+│ Gemini AI   │  Generate title + tags + summary (JSON mode)
 └──────┬──────┘
        ▼
 ┌─────────────┐
@@ -463,7 +473,11 @@ Current Settings sections and behavior:
   - Export as JSON: downloads all bookmarks with metadata
   - Export as HTML: downloads browser-compatible bookmark HTML
 - **Data Quality**
-  - Run **Reprocess Weak Titles** from UI, which dispatches `/api/v1/bookmarks/reprocess-weak`
+  - **Run Process All**: dispatches every bookmark for full AI reprocessing via `/api/v1/bookmarks/reprocess-all`
+  - **Run Selected**: searchable dropdown to pick a bookmark, then AI regenerates its title via `/api/v1/bookmarks/:id/reprocess`
+  - **Run Weak-Only Reprocess**: auto-detects and re-enriches low-quality titles via `/api/v1/bookmarks/reprocess-weak`
+  - **Refresh button**: manually reload the bookmark list (no continuous polling)
+  - **Info tooltip**: hover/tap the glowing ℹ icon next to "Reprocess Weak Titles" for details
 
 Note: API key input/testing UI has been intentionally removed from Settings. Gemini keys are configured on the backend through environment variables.
 

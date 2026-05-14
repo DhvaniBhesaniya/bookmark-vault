@@ -38,6 +38,9 @@ pub struct Bookmark {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duplicate_links: Option<Vec<String>>,
 
+    #[serde(default)]
+    pub use_default_image: bool,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedding: Option<Vec<f64>>,
 
@@ -85,6 +88,7 @@ pub struct UpdateBookmarkRequest {
     pub tags: Option<Vec<String>>,
     pub is_favorite: Option<bool>,
     pub collection_id: Option<String>,
+    pub use_default_image: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]

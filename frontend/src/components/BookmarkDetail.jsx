@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, Sparkles, Tag, FileText, Globe, Calendar, Trash2, ArrowLeft, FolderOpen, Type, Pencil } from 'lucide-react';
+import { X, ExternalLink, Sparkles, Tag, FileText, Globe, Calendar, Trash2, ArrowLeft, FolderOpen, Type, Pencil, ImageIcon, ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { cn, formatDate, extractDomain, getFaviconUrl, resolveOid } from '../lib/utils';
 import FolderPicker from './FolderPicker';
 import { toast } from 'sonner';
+
+const DEFAULT_IMAGE = '/default_image/image_not_found.png';
 
 function resolveId(collection) {
   return resolveOid(collection.id ?? collection._id);
@@ -16,13 +18,31 @@ export default function BookmarkDetail({ bookmark, isOpen, onClose, onSave, onDe
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [imgDropdownOpen, setImgDropdownOpen] = useState(false);
+  const imgDropdownRef = useRef(null);
 
   useEffect(() => {
     if (bookmark) {
       setEdited({ ...bookmark });
       setIsEditing(false);
+      setImgDropdownOpen(false);
     }
   }, [bookmark]);
+
+  // Close image dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (imgDropdownRef.current && !imgDropdownRef.current.contains(e.target)) {
+        setImgDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+  }, []);
 
   if (!bookmark || !edited) return null;
 
@@ -51,7 +71,8 @@ export default function BookmarkDetail({ bookmark, isOpen, onClose, onSave, onDe
       edited.title !== bookmark.title ||
       edited.notes !== bookmark.notes ||
       JSON.stringify(edited.tags) !== JSON.stringify(bookmark.tags) ||
-      JSON.stringify(edited.duplicate_links) !== JSON.stringify(bookmark.duplicate_links)
+      JSON.stringify(edited.duplicate_links) !== JSON.stringify(bookmark.duplicate_links) ||
+      Boolean(edited.use_default_image) !== Boolean(bookmark.use_default_image)
     );
   };
 
@@ -104,11 +125,67 @@ export default function BookmarkDetail({ bookmark, isOpen, onClose, onSave, onDe
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
-              {bookmark.og_image && (
-                <div className="rounded-lg overflow-hidden border border-border">
-                  <img src={bookmark.og_image} alt="" className="w-full aspect-video object-cover" />
-                </div>
-              )}
+              {/* Image with preference selector */}
+              <div className="relative rounded-lg overflow-hidden border border-border">
+                <img
+                  src={edited.use_default_image ? DEFAULT_IMAGE : (bookmark.og_image || DEFAULT_IMAGE)}
+                  alt=""
+                  className="w-full aspect-video object-cover"
+                />
+                {/* Image source dropdown — top-right corner, always visible */}
+                <div ref={imgDropdownRef} className="absolute top-2 right-2 z-10">
+                  <button
+                    type="button"
+                    onClick={() => setImgDropdownOpen((v) => !v)}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium hover:bg-black/75 transition-colors"
+                  >
+                    <ImageIcon className="w-3 h-3" />
+                    <span>{edited.use_default_image ? 'Default' : 'Current'}</span>
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', imgDropdownOpen && 'rotate-180')} />
+                  </button>
+
+                    {imgDropdownOpen && (
+                      <div className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-bg-elevated border border-border shadow-ambient overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => { setEdited((p) => ({ ...p, use_default_image: false })); setImgDropdownOpen(false); }}
+                          className={cn(
+                            'w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors',
+                            !edited.use_default_image
+                              ? 'bg-accent/10 text-accent-light'
+                              : 'text-text-primary hover:bg-bg-secondary'
+                          )}
+                        >
+                          <span className={cn(
+                            'w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0',
+                            !edited.use_default_image ? 'border-accent' : 'border-border'
+                          )}>
+                            {!edited.use_default_image && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+                          </span>
+                          Current Image
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setEdited((p) => ({ ...p, use_default_image: true })); setImgDropdownOpen(false); }}
+                          className={cn(
+                            'w-full flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors',
+                            edited.use_default_image
+                              ? 'bg-accent/10 text-accent-light'
+                              : 'text-text-primary hover:bg-bg-secondary'
+                          )}
+                        >
+                          <span className={cn(
+                            'w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0',
+                            edited.use_default_image ? 'border-accent' : 'border-border'
+                          )}>
+                            {edited.use_default_image && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
+                          </span>
+                          Default Image
+                        </button>
+                      </div>
+                    )}
+                  </div>
+              </div>
 
               {bookmark.url && (
                 <div className="space-y-1.5">

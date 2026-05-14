@@ -469,10 +469,11 @@ export default function SettingsPage() {
                       type="button"
                       onClick={loadBookmarksForSelection}
                       disabled={loadingBookmarks}
-                      className="p-2 rounded-lg text-text-muted hover:text-accent hover:bg-accent/10 transition-all disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-text-muted hover:text-accent hover:bg-accent/10 transition-all disabled:opacity-50"
                       title="Refresh bookmarks list"
                     >
-                      <RefreshCw className={cn('w-4 h-4', loadingBookmarks && 'animate-spin')} />
+                      <RefreshCw className={cn('w-3.5 h-3.5', loadingBookmarks && 'animate-spin')} />
+                      <span>Refresh if no bookmark found</span>
                     </button>
                   </div>
                   <div className="space-y-4">

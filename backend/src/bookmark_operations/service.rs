@@ -137,13 +137,14 @@ pub async fn create_bookmark(
         is_favorite: false,
         collection_id: None,
         duplicate_links: None,
+        use_default_image: false,
         embedding: None,
         status: "processing".to_string(),
         created_at: now,
         updated_at: now,
     };
 
-    let result = collection.insert_one(&bookmark).await?;
+    let result = collection.insert_one(&bookmark).await?;;
     let bookmark_id = result.inserted_id.as_object_id()
         .ok_or_else(|| AppError::Internal("Failed to get bookmark ID".into()))?;
 
@@ -295,6 +296,7 @@ pub async fn update_bookmark(
         update_doc.insert("duplicate_links", filtered_links);
     }
     if let Some(fav) = body.is_favorite { update_doc.insert("is_favorite", fav); }
+    if let Some(use_default) = body.use_default_image { update_doc.insert("use_default_image", use_default); }
     if let Some(collection_id) = &body.collection_id {
         if collection_id.trim().is_empty() {
             update_doc.insert("collection_id", bson::Bson::Null);
@@ -496,6 +498,7 @@ pub async fn process_import_batch(
                 is_favorite: false,
                 collection_id: None,
                 duplicate_links: None,
+                use_default_image: false,
                 embedding: None,
                 status: "ready".to_string(),
                 created_at,

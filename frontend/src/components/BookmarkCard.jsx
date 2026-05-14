@@ -41,10 +41,10 @@ const BookmarkCard = forwardRef(function BookmarkCard(
           onClick={() => onOpen?.(bookmark)}
         >
           {/* OG Image */}
-          {bookmark.og_image && (
+          {(bookmark.og_image || bookmark.use_default_image) && (
             <div className="relative w-full aspect-video overflow-hidden bg-bg-secondary">
               <img
-                src={bookmark.og_image}
+                src={bookmark.use_default_image ? '/default_image/image_not_found.png' : bookmark.og_image}
                 alt=""
                 loading="lazy"
                 className={cn(

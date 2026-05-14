@@ -99,6 +99,7 @@ export default function HomePage() {
         tags: edited.tags,
         duplicate_links: edited.duplicate_links,
         is_favorite: edited.is_favorite,
+        use_default_image: edited.use_default_image || false,
       };
       await updateBookmark.mutateAsync(payload);
       toast.success('Bookmark updated');
