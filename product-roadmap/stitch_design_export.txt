@@ -1,0 +1,257 @@
+=== FULL DESIGN MD ===
+---
+name: Nocturne Noir
+colors:
+  surface: '#131318'
+  surface-dim: '#131318'
+  surface-bright: '#39383e'
+  surface-container-lowest: '#0e0e13'
+  surface-container-low: '#1b1b20'
+  surface-container: '#1f1f25'
+  surface-container-high: '#2a292f'
+  surface-container-highest: '#35343a'
+  on-surface: '#e4e1e9'
+  on-surface-variant: '#c9c4d7'
+  inverse-surface: '#e4e1e9'
+  inverse-on-surface: '#303036'
+  outline: '#928ea0'
+  outline-variant: '#474554'
+  surface-tint: '#c7bfff'
+  primary: '#c7bfff'
+  on-primary: '#2b009e'
+  primary-container: '#8e7fff'
+  on-primary-container: '#25008c'
+  inverse-primary: '#5a46d3'
+  secondary: '#c7c5d0'
+  on-secondary: '#303038'
+  secondary-container: '#494852'
+  on-secondary-container: '#b9b7c2'
+  tertiary: '#c6c6c7'
+  on-tertiary: '#2f3131'
+  tertiary-container: '#909191'
+  on-tertiary-container: '#282a2a'
+  error: '#ffb4ab'
+  on-error: '#690005'
+  error-container: '#93000a'
+  on-error-container: '#ffdad6'
+  primary-fixed: '#e4deff'
+  primary-fixed-dim: '#c7bfff'
+  on-primary-fixed: '#180065'
+  on-primary-fixed-variant: '#4228bb'
+  secondary-fixed: '#e4e1ed'
+  secondary-fixed-dim: '#c7c5d0'
+  on-secondary-fixed: '#1b1b23'
+  on-secondary-fixed-variant: '#46464f'
+  tertiary-fixed: '#e2e2e2'
+  tertiary-fixed-dim: '#c6c6c7'
+  on-tertiary-fixed: '#1a1c1c'
+  on-tertiary-fixed-variant: '#454747'
+  background: '#131318'
+  on-background: '#e4e1e9'
+  surface-variant: '#35343a'
+typography:
+  display-lg:
+    fontFamily: ebGaramond
+    fontSize: 48px
+    fontWeight: '500'
+    lineHeight: '1.1'
+    letterSpacing: -0.02em
+  headline-md:
+    fontFamily: ebGaramond
+    fontSize: 32px
+    fontWeight: '400'
+    lineHeight: '1.2'
+  title-sm:
+    fontFamily: manrope
+    fontSize: 18px
+    fontWeight: '600'
+    lineHeight: '1.5'
+    letterSpacing: 0.01em
+  body-main:
+    fontFamily: manrope
+    fontSize: 16px
+    fontWeight: '400'
+    lineHeight: '1.6'
+  label-caps:
+    fontFamily: manrope
+    fontSize: 12px
+    fontWeight: '700'
+    lineHeight: '1'
+    letterSpacing: 0.1em
+rounded:
+  sm: 0.25rem
+  DEFAULT: 0.5rem
+  md: 0.75rem
+  lg: 1rem
+  xl: 1.5rem
+  full: 9999px
+spacing:
+  unit: 8px
+  container-max: 1100px
+  gutter: 24px
+  card-gap: 32px
+  section-padding: 80px
+---
+
+## Brand & Style
+
+The design system is anchored in the concept of a "Digital Sanctuary." It targets discerning curators who view their bookmarks not just as links, but as a personal library of inspiration. The aesthetic is a fusion of **Modern Minimalism** and **Glassmorphism**, elevated by cinematic lighting effects.
+
+The emotional response is one of quiet confidence and focus. By using a near-black foundation, the design system minimizes cognitive load, while the vibrant purple accents act as a guiding light through the user's curated "vault." A subtle film grain noise texture is applied globally to prevent the deep blacks from feeling sterile, adding a tactile, organic quality to the digital interface.
+
+## Colors
+
+The palette for this design system is intentionally restrictive to maintain a high-end, editorial feel. 
+
+- **The Void (#0a0a0f):** The primary canvas. A deep, abyssal navy-black that provides infinite depth.
+- **The Glow (#7c6af7):** A singular, vibrant purple used sparingly for interaction cues, primary actions, and "luminous" borders.
+- **Surface Elevation (#12121a):** A slightly lighter shade used for cards and containers to create subtle separation from the background.
+- **High Contrast:** Pure white (#ffffff) is used for primary text to ensure absolute legibility against the dark void, while muted greys are reserved for secondary metadata.
+
+Gradient meshes should be used in the background of top-level views, blending the primary accent color with deep indigos, blurred to a degree that they appear as soft light leaks rather than distinct shapes.
+
+## Typography
+
+This design system utilizes a sophisticated typographic pairing to balance tradition with modernity. 
+
+**Headings & Brand:** `ebGaramond` provides a literary, timeless quality. It should be used for page titles, empty state callouts, and branding. It is most effective when set with tight letter-spacing and generous line-height.
+
+**UI & Body:** `manrope` serves as the functional workhorse. Its geometric yet friendly proportions ensure that dense bookmark lists remain readable. Use the "Label-Caps" style for categories and tags to create a clear visual hierarchy against the serif headers.
+
+## Layout & Spacing
+
+The layout philosophy of this design system is built on **Fixed Grid Centering**. Content is never allowed to sprawl; instead, it is housed in a disciplined 1100px central container to evoke the feeling of a physical book or a curated gallery.
+
+Spacing is aggressive and "breathable." We favor whitespace over dividers. 
+- **Center Alignment:** Primary cards and headers are center-aligned to create a focused, symmetrical "Vault" experience.
+- **Rhythm:** All spacing must be a multiple of 8px. Use 80px or 120px for vertical section breathing room to emphasize the minimal, luxury nature of the product.
+
+## Elevation & Depth
+
+In this design system, depth is not created through traditional drop shadows, but through **Luminosity and Blurs**.
+
+1.  **Backdrop Blurs:** Floating elements (like navigation bars or modals) should use a 20px backdrop blur with a 40% opaque surface color.
+2.  **Glowing Borders:** Instead of shadows, elevated cards feature a 1px inner stroke. On hover, this stroke transitions to a subtle outer glow using the primary accent color.
+3.  **Noise Overlay:** A global 3% opacity noise texture is overlaid on the entire UI. This breaks the digital perfection of the dark background and gives the "surfaces" a physical, paper-like grain.
+4.  **Tonal Stacking:** Higher-level elements are slightly lighter in color than the elements below them, rather than darker.
+
+## Shapes
+
+The shape language is refined and consistent. We avoid "organic" or "bubbly" curves in favor of structured, elegant radii.
+
+- **Cards & Modals:** Use a `1rem` (16px) radius to provide a soft, premium feel.
+- **Buttons & Inputs:** Use a `0.5rem` (8px) radius.
+- **Interactive States:** On hover, shapes should not grow in size, but rather "illuminate" via their border or inner glow, maintaining the structural integrity of the layout.
+
+## Components
+
+### Buttons
+- **Primary:** Solid `#7c6af7` with white text. High-contrast and vibrant.
+- **Ghost (Default):** Transparent background with a `1px` white or muted border at 20% opacity. On hover, the border becomes the primary accent color and a subtle glow appears.
+
+### Cards
+Cards are the heart of the system. They feature a center-aligned layout. The card background is `#12121a`. Images within cards should have a subtle desaturation filter that returns to full color only on hover.
+
+### Inputs
+Search bars and URL fields are ultra-minimal. They feature no background—only a bottom border of 1px. When focused, the bottom border glows in the primary purple, and the serif "Display" font is used for the input text to make the act of "saving" feel like "writing."
+
+### Chips/Tags
+Small, uppercase `manrope` labels. They use a dark purple tint for the background (10% opacity) and the primary purple for the text. No borders.
+
+### Lists
+Lists are treated as "Stacks." Each item is separated by wide margins rather than lines, maintaining the airy, luxurious feel of the system.
+
+=== NAMED COLORS ===
+background: #131318
+error: #ffb4ab
+error_container: #93000a
+inverse_on_surface: #303036
+inverse_primary: #5a46d3
+inverse_surface: #e4e1e9
+on_background: #e4e1e9
+on_error: #690005
+on_error_container: #ffdad6
+on_primary: #2b009e
+on_primary_container: #25008c
+on_primary_fixed: #180065
+on_primary_fixed_variant: #4228bb
+on_secondary: #303038
+on_secondary_container: #b9b7c2
+on_secondary_fixed: #1b1b23
+on_secondary_fixed_variant: #46464f
+on_surface: #e4e1e9
+on_surface_variant: #c9c4d7
+on_tertiary: #2f3131
+on_tertiary_container: #282a2a
+on_tertiary_fixed: #1a1c1c
+on_tertiary_fixed_variant: #454747
+outline: #928ea0
+outline_variant: #474554
+primary: #c7bfff
+primary_container: #8e7fff
+primary_fixed: #e4deff
+primary_fixed_dim: #c7bfff
+secondary: #c7c5d0
+secondary_container: #494852
+secondary_fixed: #e4e1ed
+secondary_fixed_dim: #c7c5d0
+surface: #131318
+surface_bright: #39383e
+surface_container: #1f1f25
+surface_container_high: #2a292f
+surface_container_highest: #35343a
+surface_container_low: #1b1b20
+surface_container_lowest: #0e0e13
+surface_dim: #131318
+surface_tint: #c7bfff
+surface_variant: #35343a
+tertiary: #c6c6c7
+tertiary_container: #909191
+tertiary_fixed: #e2e2e2
+tertiary_fixed_dim: #c6c6c7
+
+=== TYPOGRAPHY ===
+{
+  "body-main": {
+    "fontFamily": "manrope",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "1.6"
+  },
+  "display-lg": {
+    "fontFamily": "ebGaramond",
+    "fontSize": "48px",
+    "fontWeight": "500",
+    "lineHeight": "1.1",
+    "letterSpacing": "-0.02em"
+  },
+  "headline-md": {
+    "fontFamily": "ebGaramond",
+    "fontSize": "32px",
+    "fontWeight": "400",
+    "lineHeight": "1.2"
+  },
+  "label-caps": {
+    "fontFamily": "manrope",
+    "fontSize": "12px",
+    "fontWeight": "700",
+    "lineHeight": "1",
+    "letterSpacing": "0.1em"
+  },
+  "title-sm": {
+    "fontFamily": "manrope",
+    "fontSize": "18px",
+    "fontWeight": "600",
+    "lineHeight": "1.5",
+    "letterSpacing": "0.01em"
+  }
+}
+
+=== SPACING ===
+{
+  "card-gap": "32px",
+  "container-max": "1100px",
+  "gutter": "24px",
+  "section-padding": "80px",
+  "unit": "8px"
+}

@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: bookmarkvault-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    plan: free
+    autoDeploy: false
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DATABASE_NAME
+        value: Bookmarkvault
+      - key: CORS_ORIGIN
+        value: https://bookmarkvault.onrender.com # Change to actual frontend domain
+      - key: MONGODB_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  - type: web
+    name: bookmarkvault-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    plan: free
+    autoDeploy: false
+    envVars:
+      - key: VITE_API_URL
+        value: https://bookmarkvault-backend.onrender.com/api/v1 # Change to actual backend domain
