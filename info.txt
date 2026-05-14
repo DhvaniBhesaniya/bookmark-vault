@@ -1,0 +1,51 @@
+
+mongo-db
+narutogokuluffy009_beru
+BLJ//wkm//FeX/HcgU//iBp
+mongo db  and stick mcp server are being intigerated in this antigravity.
+
+bookmark vault api key in google ai stodio
+
+
+
+# Bookmarkvault Backend — Local Development
+MONGODB_URI=mongodb+srv://<username>:<pwd>@beru.irqn2kv.mongodb.net/?appName=beru
+DATABASE_NAME=Bookmarkvault
+GEMINI_API_KEY_1=<google ai key>
+GEMINI_API_KEY_2=<google ai key>
+JWT_SECRET=dev-bookmarkvault-secret-2025
+PORT=<port>
+CORS_ORIGIN=http://localhost:5173
+
+
+
+{
+  "fields": [
+    {
+      "numDimensions": 3072,
+      "path": "embedding",
+      "similarity": "cosine",
+      "type": "vector"
+    },
+    {
+      "path": "user_id",
+      "type": "filter"
+    }
+  ]
+}
+
+sudo lsof -i :8080
+
+
+The Matryoshka Dimension Scale
+Dimension Size         | Quality/Accuracy Retention              | Best Use Case for Your Bookmarks
+-------------------------------------------------------------------------------------------------------------------------------------------
+3072                   | 100% (Baseline)Highest Precision        | "Legal/Clinical/Research. Best if your bookmarks contain semantically dense, highly technical documentation where a single word changes the whole meaning."
+2048                   | ~99% Retention(<1% loss on Recall@10)   | Precision with slight savings. You save 33% of your MongoDB storage with practically zero noticeable difference to the end user.
+1536                   | ~97% RetentionExcellent Balance         | The Industry Standard. This matches the size of OpenAI's classic ada-002. It's the sweet spot for balancing high-quality search results and database storage costs.
+1024                   | ~95% Retention(2-5% drop in precision)  | Heavy Ingestion. A massive 66% storage reduction. It works very well if your bookmark summaries are broad and you just need general topical grouping.
+768                    | ~90-93% RetentionMaximum Compression    | "Fast/Cheap First-Stage Retrieval. Use this if storage is your absolute bottleneck. It's still surprisingly capable for finding general concepts, but might miss highly nuanced technical queries."
+
+
+for jwt 
+openssl rand -base64 32   or openssl rand -hex 64   or head -c 32 /dev/urandom | base64
