@@ -161,7 +161,7 @@ export default function HomePage() {
       <div className="flex flex-col flex-1 h-full w-full max-w-container mx-auto px-gutter relative z-10 min-h-0">
         {/* Search */}
         <div className="shrink-0 pt-8 pb-6 bg-bg/70 backdrop-blur-xl -mx-gutter px-gutter z-20">
-          <SearchBar onSearch={search} resultCount={query ? resultCount : undefined} query={query} />
+          <SearchBar onSearch={search} resultCount={query ? resultCount : undefined} isSearching={isSearching} query={query} />
         </div>
 
         <div className="flex flex-1 gap-8 min-h-0 pb-6">
@@ -173,6 +173,7 @@ export default function HomePage() {
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
               onTagToggle={handleTagToggle}
+              totalBookmarks={bookmarksData?.total}
               settingsNode={(
                 <div className="flex flex-col gap-4">
                   <SearchSettingsPanel
@@ -203,6 +204,7 @@ export default function HomePage() {
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
                 onTagToggle={handleTagToggle}
+                totalBookmarks={bookmarksData?.total}
                 settingsNode={(
                   <div className="flex flex-col gap-4">
                     <SearchSettingsPanel

@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { BorderBeam } from './magicui/BorderBeam';
 
-export default function SearchBar({ onSearch, resultCount, query: externalQuery }) {
+export default function SearchBar({ onSearch, resultCount, isSearching, query: externalQuery }) {
   const [query, setQuery] = useState(externalQuery || '');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef(null);
@@ -100,7 +100,13 @@ export default function SearchBar({ onSearch, resultCount, query: externalQuery 
       </div>
 
       {/* Result count */}
-      {query && resultCount !== undefined && (
+      {query && isSearching && (
+        <p className="text-xs text-text-muted mt-2 text-center animate-fade-in flex items-center justify-center gap-2">
+          <span className="inline-block w-3.5 h-3.5 border-2 border-accent/40 border-t-accent rounded-full animate-spin" />
+          Searching for &ldquo;{query}&rdquo;&hellip;
+        </p>
+      )}
+      {query && !isSearching && resultCount !== undefined && (
         <p className="text-xs text-text-muted mt-2 text-center animate-fade-in">
           {resultCount} {resultCount === 1 ? 'result' : 'results'} for &ldquo;{query}&rdquo;
         </p>
