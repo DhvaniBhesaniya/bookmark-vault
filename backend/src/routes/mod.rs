@@ -10,10 +10,11 @@ use crate::{auth_operations, bookmark_operations, collection_operations, search_
 /// Build the full application router by aggregating routes from all operation modules.
 pub fn build_router(state: AppState) -> Router {
     // Public routes (no auth required)
-    let public_routes = auth_operations::routes();
+    let public_routes = auth_operations::public_routes();
 
     // Protected routes (require JWT)
-    let protected_routes = bookmark_operations::routes()
+    let protected_routes = auth_operations::protected_routes()
+        .merge(bookmark_operations::routes())
         .merge(search_operations::routes())
         .merge(collection_operations::routes())
         .layer(from_fn_with_state(

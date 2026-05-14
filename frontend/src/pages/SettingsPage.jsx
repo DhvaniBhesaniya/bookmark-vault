@@ -1,33 +1,44 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Key, Palette, Download, Upload, Eye, EyeOff, Check, Loader2, Sun, Moon, Monitor, Wand2 } from 'lucide-react';
+import { User, Palette, Download, Upload, Eye, EyeOff, Check, Loader2, Sun, Moon, Monitor, Wand2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ACCENT_COLORS } from '../lib/constants';
 import useAuthStore from '../store/useAuthStore';
 import { useTheme } from '../components/ThemeProvider';
 import { Dock, DockIcon } from '../components/magicui/Dock';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import api from '../lib/api';
 import { toast } from 'sonner';
 
 const sections = [
   { id: 'account', label: 'Account', icon: User },
-  { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'import-export', label: 'Import/Export', icon: Download },
   { id: 'data-quality', label: 'Data Quality', icon: Wand2 },
 ];
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState(() => searchParams.get('section') || 'account');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [apiKey, setApiKey] = useState('');
   const [reprocessing, setReprocessing] = useState(false);
+  const [exportingJson, setExportingJson] = useState(false);
+  const [exportingHtml, setExportingHtml] = useState(false);
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+
   const { user } = useAuthStore();
   const { theme, setTheme, accent, setAccent } = useTheme();
+
 
   const handleReprocessWeak = async () => {
     setReprocessing(true);
@@ -41,10 +52,124 @@ export default function SettingsPage() {
     }
   };
 
+  const handleChangePassword = async () => {
+    const current = currentPassword.trim();
+    const next = newPassword.trim();
+
+    if (!current || !next) {
+      toast.error('Please fill current and new password');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await api.post('/auth/change-password', {
+        current_password: current,
+        new_password: next,
+      });
+
+      toast.success('Password updated');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const downloadFile = (content, fileName, mimeType) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const getAllBookmarks = async () => {
+    const { data } = await api.get('/bookmarks?all=true');
+    return data?.bookmarks || [];
+  };
+
+  const handleExportJson = async () => {
+    setExportingJson(true);
+    try {
+      const bookmarks = await getAllBookmarks();
+      const payload = {
+        exported_at: new Date().toISOString(),
+        total: bookmarks.length,
+        bookmarks,
+      };
+
+      const fileName = `bookmarkvault-export-${new Date().toISOString().slice(0, 10)}.json`;
+      downloadFile(JSON.stringify(payload, null, 2), fileName, 'application/json');
+      toast.success(`Exported ${bookmarks.length} bookmark(s) as JSON`);
+    } catch {
+      toast.error('Failed to export JSON');
+    } finally {
+      setExportingJson(false);
+    }
+  };
+
+  const handleExportHtml = async () => {
+    setExportingHtml(true);
+    try {
+      const bookmarks = await getAllBookmarks();
+      const links = bookmarks.filter((b) => !!b.url);
+
+      const escapeHtml = (str = '') => str
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+
+      const items = links
+        .map((b) => {
+          const title = escapeHtml(b.title || b.url);
+          const url = escapeHtml(b.url);
+          const addDate = b.created_at ? Math.floor(new Date(b.created_at).getTime() / 1000) : Math.floor(Date.now() / 1000);
+          return `    <DT><A HREF="${url}" ADD_DATE="${addDate}">${title}</A>`;
+        })
+        .join('\n');
+
+      const html = [
+        '<!DOCTYPE NETSCAPE-Bookmark-file-1>',
+        '<!-- This is an automatically generated file.',
+        '     It will be read and overwritten.',
+        '     DO NOT EDIT! -->',
+        '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
+        '<TITLE>Bookmarks</TITLE>',
+        '<H1>Bookmarks</H1>',
+        '<DL><p>',
+        '  <DT><H3>Bookmarkvault Export</H3>',
+        '  <DL><p>',
+        items,
+        '  </DL><p>',
+        '</DL><p>',
+      ].join('\n');
+
+      const fileName = `bookmarkvault-export-${new Date().toISOString().slice(0, 10)}.html`;
+      downloadFile(html, fileName, 'text/html;charset=utf-8');
+      toast.success(`Exported ${links.length} bookmark(s) as HTML`);
+    } catch {
+      toast.error('Failed to export HTML');
+    } finally {
+      setExportingHtml(false);
+    }
+  };
+
+
   // Sync with URL search params when navigating from sidebar dropdown
   useEffect(() => {
     const section = searchParams.get('section');
-    if (section) setActiveSection(section);
+    if (section && sections.some((s) => s.id === section)) {
+      setActiveSection(section);
+    }
   }, [searchParams]);
 
   return (
@@ -91,38 +216,55 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Change Password</label>
-                      <Input type="password" placeholder="Current password" className="w-full" />
-                      <Input type="password" placeholder="New password" className="w-full" />
-                      <Button size="sm" className="mt-2">Update Password</Button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              {activeSection === 'api-keys' && (
-                <div className="rounded-xl bg-bg-elevated border border-border p-6 sm:p-8 space-y-6">
-                  <h2 className="text-title-sm text-text-primary">API Keys</h2>
-                  <div className="space-y-2 max-w-lg">
-                    <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Gemini API Key</label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Input
-                          type={showApiKey ? 'text' : 'password'}
-                          value={apiKey}
-                          onChange={(e) => setApiKey(e.target.value)}
-                          placeholder="AIza..."
-                          className="w-full"
-                        />
-                        <button
-                          onClick={() => setShowApiKey(!showApiKey)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
-                        >
-                          {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Input
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            placeholder="Current password"
+                            className="w-full pr-10"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+                            aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+                          >
+                            {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+
+                        <div className="relative">
+                          <Input
+                            type={showNewPassword ? 'text' : 'password'}
+                            placeholder="New password"
+                            className="w-full pr-10"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+                            aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                          >
+                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
-                      <Button variant="ghost" size="default">Test</Button>
+
+                      <Button
+                        size="sm"
+                        className="mt-2"
+                        onClick={handleChangePassword}
+                        disabled={changingPassword}
+                      >
+                        {changingPassword ? 'Updating...' : 'Update Password'}
+                      </Button>
                     </div>
-                    <p className="text-xs text-text-faint">Get your key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-accent-light hover:underline">Google AI Studio</a></p>
+
                   </div>
                 </div>
               )}
@@ -196,9 +338,17 @@ export default function SettingsPage() {
                 <div className="rounded-xl bg-bg-elevated border border-border p-6 sm:p-8 space-y-6">
                   <h2 className="text-title-sm text-text-primary">Import / Export</h2>
                   <div className="flex flex-wrap gap-3">
-                    <Button variant="ghost"><Upload className="w-4 h-4" />Import Bookmarks</Button>
-                    <Button variant="ghost"><Download className="w-4 h-4" />Export as JSON</Button>
-                    <Button variant="ghost"><Download className="w-4 h-4" />Export as HTML</Button>
+                    <Button variant="ghost" onClick={() => navigate('/import')}>
+                      <Upload className="w-4 h-4" />Import Bookmarks
+                    </Button>
+                    <Button variant="ghost" onClick={handleExportJson} disabled={exportingJson || exportingHtml}>
+                      {exportingJson ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                      Export as JSON
+                    </Button>
+                    <Button variant="ghost" onClick={handleExportHtml} disabled={exportingJson || exportingHtml}>
+                      {exportingHtml ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                      Export as HTML
+                    </Button>
                   </div>
                 </div>
               )}

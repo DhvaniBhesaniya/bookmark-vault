@@ -37,6 +37,14 @@ Built with **Rust (Axum)** · **React (Vite + Tailwind)** · **MongoDB Atlas** �
 - **Browser Export Support** — Import HTML bookmark exports from Chrome, Firefox, Edge, Safari
 - **Background Processing** — Imports run asynchronously with real-time progress tracking
 - **Batch AI Enrichment** — Tags and summaries generated in batches during import
+- **Settings Integration** — Import flow is directly accessible from **Settings → Import / Export**
+
+### 💾 Export Utilities
+- **JSON Export** — Download all bookmarks as a structured JSON backup
+- **HTML Export** — Download browser-compatible Netscape Bookmark HTML
+
+### 🛠️ Data Quality Tools
+- **Reprocess Weak Titles** — Trigger AI re-enrichment for low-quality or stuck bookmarks from **Settings → Data Quality**
 
 ### 🎨 Premium UI
 - **Nocturne Noir Design** — Dark-first aesthetic with glassmorphism and ambient shadows
@@ -49,7 +57,7 @@ Built with **Rust (Axum)** · **React (Vite + Tailwind)** · **MongoDB Atlas** �
 
 ## 📸 Screenshots
 
-<details>
+<details open>
 <summary><strong>Desktop Views</strong></summary>
 
 | Main Dashboard | Bookmark Details |
@@ -66,7 +74,7 @@ Built with **Rust (Axum)** · **React (Vite + Tailwind)** · **MongoDB Atlas** �
 
 </details>
 
-<details>
+<details open>
 <summary><strong>Mobile Views</strong></summary>
 
 | Home | Bookmark Details | Settings |
@@ -269,6 +277,12 @@ All endpoints are prefixed with `/api/v1`. Protected routes require a `Bearer` t
 | `POST` | `/api/v1/auth/register` | Create a new account |
 | `POST` | `/api/v1/auth/login` | Login and receive JWT token |
 
+### Authentication (Protected)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/auth/change-password` | Change the logged-in user's password |
+
 ### Bookmarks (Protected)
 
 | Method | Endpoint | Description |
@@ -431,6 +445,27 @@ User query: "machine learning tutorials"
 - **Command Palette**: Press `⌘K` / `Ctrl+K` to open the command palette for quick navigation.
 - **Multiple Gemini keys**: Configure up to 5 keys to avoid rate limits during bulk import.
 - **Reprocess weak bookmarks**: Use the reprocess endpoint to re-enrich bookmarks that failed initial processing.
+
+---
+
+## ⚙️ Settings Capabilities
+
+Current Settings sections and behavior:
+
+- **Account**
+  - View account email
+  - Change password via `/api/v1/auth/change-password`
+- **Appearance**
+  - Theme mode: Light / Dark / System
+  - Accent color selection
+- **Import / Export**
+  - Import bookmarks: opens the dedicated import flow page
+  - Export as JSON: downloads all bookmarks with metadata
+  - Export as HTML: downloads browser-compatible bookmark HTML
+- **Data Quality**
+  - Run **Reprocess Weak Titles** from UI, which dispatches `/api/v1/bookmarks/reprocess-weak`
+
+Note: API key input/testing UI has been intentionally removed from Settings. Gemini keys are configured on the backend through environment variables.
 
 ---
 

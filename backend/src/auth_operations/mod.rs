@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use axum::{routing::post, Router};
 use crate::utils::db::AppState;
 
+
 // --- Structs ---
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,8 +39,14 @@ pub struct AuthResponse {
 
 // --- Routes ---
 
-pub fn routes() -> Router<AppState> {
+pub fn public_routes() -> Router<AppState> {
     Router::new()
         .route("/auth/register", post(model::register))
         .route("/auth/login", post(model::login))
 }
+
+pub fn protected_routes() -> Router<AppState> {
+    Router::new()
+        .route("/auth/change-password", post(model::change_password))
+}
+

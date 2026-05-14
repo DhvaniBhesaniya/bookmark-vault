@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Bookmark, Settings, LogOut, User, Command, Menu, CreditCard } from 'lucide-react';
+import { Bookmark, Settings, LogOut, User, Command, Menu } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -88,13 +88,12 @@ export default function Navbar({ onCommandPaletteOpen, onMenuToggle }) {
               </div>
               <DropdownMenuSeparator className="mb-1 bg-border/50" />
               <div className="space-y-1">
-                <DropdownMenuItem className="rounded-lg cursor-pointer px-2 py-2 text-sm text-text-primary hover:bg-accent/10 hover:text-accent-light focus:bg-accent/10 focus:text-accent-light transition-colors">
+                <DropdownMenuItem
+                  onClick={() => navigate('/settings?section=account')}
+                  className="rounded-lg cursor-pointer px-2 py-2 text-sm text-text-primary hover:bg-accent/10 hover:text-accent-light focus:bg-accent/10 focus:text-accent-light transition-colors"
+                >
                   <User className="w-4 h-4 mr-3 text-text-muted group-hover:text-accent-light" />
                   Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="rounded-lg cursor-pointer px-2 py-2 text-sm text-text-primary hover:bg-accent/10 hover:text-accent-light focus:bg-accent/10 focus:text-accent-light transition-colors">
-                  <CreditCard className="w-4 h-4 mr-3 text-text-muted group-hover:text-accent-light" />
-                  Billing
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/settings')} className="rounded-lg cursor-pointer px-2 py-2 text-sm text-text-primary hover:bg-accent/10 hover:text-accent-light focus:bg-accent/10 focus:text-accent-light transition-colors">
                   <Settings className="w-4 h-4 mr-3 text-text-muted group-hover:text-accent-light" />
