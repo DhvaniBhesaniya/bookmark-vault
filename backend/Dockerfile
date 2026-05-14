@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Rust backend
-FROM rust:1.77-slim-bookworm AS builder
+FROM rust:1.88-slim-bookworm AS builder
 
 # Create a new empty shell project
 WORKDIR /usr/src/app
