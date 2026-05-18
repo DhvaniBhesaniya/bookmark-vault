@@ -41,6 +41,11 @@ export default function LandingNavbar() {
               <span>GitHub</span>
             </Button>
           </a>
+          <Link to="/login">
+            <Button variant="ghost" size="sm" className="gap-2">
+              Sign In
+            </Button>
+          </Link>
         </div>
       </div>
     </nav>
