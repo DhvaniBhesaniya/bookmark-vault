@@ -100,10 +100,10 @@ function AppLayout() {
 
 function RootRoute() {
   const token = useAuthStore((s) => s.token);
-  // If authenticated, render AppLayout which handles the internal routing
+  // If authenticated, render the full app layout
   if (token) return <AppLayout />;
-  // Otherwise, render the public LandingPage
-  return <LandingPage />;
+  // Unauthenticated users are sent to the public landing page at /bookmarkvault
+  return <Navigate to="/bookmarkvault" replace />;
 }
 
 function PublicRoute({ children }) {
@@ -156,6 +156,7 @@ export default function App() {
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<RootRoute />} />
+          <Route path="/bookmarkvault" element={<LandingPage />} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/*" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
         </Routes>
