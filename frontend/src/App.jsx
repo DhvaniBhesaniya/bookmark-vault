@@ -11,6 +11,7 @@ import HomePage from './pages/HomePage';
 import ImportPage from './pages/ImportPage';
 import SettingsPage from './pages/SettingsPage';
 import AddBookmarkPage from './pages/AddBookmarkPage';
+import LandingPage from './pages/LandingPage';
 import Sidebar from './components/Sidebar';
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSearch } from './hooks/useSearch';
@@ -97,6 +98,14 @@ function AppLayout() {
   );
 }
 
+function RootRoute() {
+  const token = useAuthStore((s) => s.token);
+  // If authenticated, render AppLayout which handles the internal routing
+  if (token) return <AppLayout />;
+  // Otherwise, render the public LandingPage
+  return <LandingPage />;
+}
+
 function PublicRoute({ children }) {
   const token = useAuthStore((s) => s.token);
 
@@ -146,6 +155,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
+          <Route path="/" element={<RootRoute />} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/*" element={<ProtectedRoute><AppLayout /></ProtectedRoute>} />
         </Routes>
